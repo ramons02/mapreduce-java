@@ -1,0 +1,32 @@
+Sistemas distribuídos são conjuntos de computadores independentes que aparecem para o usuário como um sistema único.
+O modelo MapReduce foi proposto pelo Google em 2004 para processar grandes volumes de dados em clusters de máquinas comuns.
+A ideia central do MapReduce é dividir o processamento em duas funções: map e reduce.
+A função map recebe um pedaço da entrada e emite pares chave-valor intermediários.
+A função reduce recebe uma chave e todos os valores associados a ela e produz o resultado final.
+Entre as fases map e reduce existe a fase de shuffle, que agrupa os valores de cada chave.
+O nó master coordena o trabalho e distribui as tarefas entre os nós workers.
+Cada worker processa uma fatia dos dados de forma independente e em paralelo.
+Se um worker falhar, o master pode reatribuir a tarefa a outro worker disponível.
+Essa tolerância a falhas é um dos principais motivos do sucesso do MapReduce.
+O Hadoop é a implementação de código aberto mais conhecida do modelo MapReduce.
+O Spark surgiu depois do Hadoop e mantém os dados em memória para acelerar o processamento.
+Contar palavras é o exemplo clássico usado para ensinar o modelo MapReduce.
+Processar logs de servidores web é um caso de uso comum de MapReduce no mercado.
+Indexação de páginas web, análise de cliques e recomendação de produtos também usam MapReduce.
+A comunicação entre os nós do cluster acontece pela rede, usando sockets ou chamadas remotas.
+Os dados intermediários são particionados pelo hash da chave para decidir qual reducer os receberá.
+Dividir os dados em partições permite que vários reducers trabalhem ao mesmo tempo.
+O resultado de cada reducer é consolidado pelo master e entregue ao cliente que submeteu o job.
+Escalabilidade horizontal significa adicionar mais máquinas em vez de máquinas mais potentes.
+O modelo MapReduce escala horizontalmente porque as tarefas map são independentes entre si.
+Grandes volumes de dados exigem processamento distribuído porque uma única máquina não é suficiente.
+A simplicidade do modelo esconde a complexidade da distribuição, da rede e das falhas.
+O programador escreve apenas as funções map e reduce e o framework cuida do resto.
+Sistemas distribuídos precisam lidar com falhas parciais, latência de rede e concorrência.
+O master é um ponto único de falha neste exemplo didático, mas sistemas reais replicam o master.
+Workers podem ser adicionados ao cluster a qualquer momento para aumentar a capacidade de processamento.
+O cliente não precisa saber quantos workers existem nem onde eles estão rodando.
+Essa transparência de distribuição é uma das metas dos sistemas distribuídos.
+O modelo MapReduce é um modelo de programação distribuída orientado a dados.
+Dados, dados e mais dados: o volume de dados cresce todos os dias e o processamento precisa acompanhar.
+Map, shuffle e reduce formam o fluxo de dados básico de qualquer job MapReduce.
