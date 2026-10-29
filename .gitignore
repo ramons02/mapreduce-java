@@ -1,0 +1,22 @@
+# Build
+target/
+*.class
+*.jar
+!lib/*.jar
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+bin/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
