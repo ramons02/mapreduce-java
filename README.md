@@ -97,6 +97,7 @@ java -cp target/mapreduce.jar br.edu.mapreduce.client.Client data/entrada.txt 2
 
 O segundo argumento é o número de reducers. O Client imprime o log das fases executadas
 pelo Master e as palavras mais frequentes do arquivo.
+O resultado completo (todas as palavras, ordenado) também é salvo em `saida.txt`.
 
 ### Atalho
 

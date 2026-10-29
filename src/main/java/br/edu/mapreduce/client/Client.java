@@ -26,6 +26,8 @@ import java.util.List;
  */
 public class Client {
 
+    private static final String ARQUIVO_SAIDA = "saida.txt";
+
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         Path arquivo = Path.of(args.length > 0 ? args[0] : "data/entrada.txt");
         int numReducers = args.length > 1 ? Integer.parseInt(args[1]) : 2;
@@ -60,6 +62,7 @@ public class Client {
         }
 
         imprimirResultado(resposta);
+        salvarResultado(resposta, Path.of(ARQUIVO_SAIDA));
     }
 
     private static RespostaJob submeter(String host, int porta, RequisicaoJob requisicao)
@@ -78,11 +81,16 @@ public class Client {
         }
     }
 
-    private static void imprimirResultado(RespostaJob resposta) {
+    private static List<KeyValue> ordenar(RespostaJob resposta) {
         List<KeyValue> resultado = new ArrayList<>(resposta.getResultado());
         resultado.sort(Comparator
                 .comparingLong((KeyValue kv) -> Long.parseLong(kv.getValor())).reversed()
                 .thenComparing(KeyValue::getChave));
+        return resultado;
+    }
+
+    private static void imprimirResultado(RespostaJob resposta) {
+        List<KeyValue> resultado = ordenar(resposta);
 
         long totalPalavras = resultado.stream().mapToLong(kv -> Long.parseLong(kv.getValor())).sum();
 
@@ -94,5 +102,14 @@ public class Client {
         System.out.println("Palavras distintas : " + resultado.size());
         System.out.println("Total de palavras  : " + totalPalavras);
         System.out.println("Tempo do job       : " + resposta.getDuracaoMs() + " ms");
+    }
+
+    private static void salvarResultado(RespostaJob resposta, Path destino) throws IOException {
+        List<String> linhas = new ArrayList<>();
+        for (KeyValue kv : ordenar(resposta)) {
+            linhas.add(kv.getChave() + "\t" + kv.getValor());
+        }
+        Files.write(destino, linhas, StandardCharsets.UTF_8);
+        System.out.println("Resultado completo salvo em " + destino.toAbsolutePath());
     }
 }
