@@ -73,7 +73,39 @@ Gera `target/mapreduce.jar`.
 
 ## Como executar a demonstração
 
-Abra terminais separados (um por nó) na raiz do projeto.
+A ordem de subida importa: **Master primeiro, Workers depois, Client por último**.
+Abra terminais separados (um por nó) na raiz do projeto e deixe as janelas do Master
+e dos Workers abertas enquanto o job roda.
+
+### Windows (PowerShell)
+
+Em cada terminal, execute antes `chcp 65001` para os acentos saírem corretos no console.
+
+> **Atenção:** no PowerShell as opções `-D...` do Java precisam ficar **entre aspas**.
+> Sem as aspas, o PowerShell quebra `-Dstdout.encoding=UTF-8` no ponto e o Java falha com
+> `Could not find or load main class .encoding=UTF-8`.
+
+**Terminal 1, Master:**
+
+```powershell
+java "-Dstdout.encoding=UTF-8" "-Dfile.encoding=UTF-8" -cp target\mapreduce.jar br.edu.mapreduce.master.Master
+```
+
+**Terminais 2, 3 e 4, Workers (um comando por terminal):**
+
+```powershell
+java "-Dstdout.encoding=UTF-8" "-Dfile.encoding=UTF-8" -cp target\mapreduce.jar br.edu.mapreduce.worker.Worker worker-1
+java "-Dstdout.encoding=UTF-8" "-Dfile.encoding=UTF-8" -cp target\mapreduce.jar br.edu.mapreduce.worker.Worker worker-2
+java "-Dstdout.encoding=UTF-8" "-Dfile.encoding=UTF-8" -cp target\mapreduce.jar br.edu.mapreduce.worker.Worker worker-3
+```
+
+**Terminal 5, Client (submete o job):**
+
+```powershell
+java "-Dstdout.encoding=UTF-8" "-Dfile.encoding=UTF-8" -cp target\mapreduce.jar br.edu.mapreduce.client.Client data\entrada.txt 2
+```
+
+### Linux / macOS
 
 **Terminal 1, Master:**
 
@@ -81,7 +113,7 @@ Abra terminais separados (um por nó) na raiz do projeto.
 java -cp target/mapreduce.jar br.edu.mapreduce.master.Master
 ```
 
-**Terminais 2, 3 e 4, Workers:**
+**Terminais 2, 3 e 4, Workers (um comando por terminal):**
 
 ```bash
 java -cp target/mapreduce.jar br.edu.mapreduce.worker.Worker worker-1
@@ -95,17 +127,29 @@ java -cp target/mapreduce.jar br.edu.mapreduce.worker.Worker worker-3
 java -cp target/mapreduce.jar br.edu.mapreduce.client.Client data/entrada.txt 2
 ```
 
-O segundo argumento é o número de reducers. O Client imprime o log das fases executadas
-pelo Master e as palavras mais frequentes do arquivo.
+### O que esperar
+
+O segundo argumento do Client é o número de reducers. O Client imprime o log das fases
+executadas pelo Master e as palavras mais frequentes do arquivo.
 O resultado completo (todas as palavras, ordenado) também é salvo em `saida.txt`.
+Enquanto o job roda, as janelas dos Workers mostram as tarefas de map e reduce recebidas.
 
 ### Atalho
 
-- Windows: `.\scripts\demo.ps1 3` abre o Master e 3 Workers em janelas separadas.
+- Windows: `.\scripts\demo.ps1 3` abre o Master e 3 Workers em janelas separadas, já com
+  a codificação configurada. Depois, basta rodar o Client no seu terminal.
+  Se o PowerShell bloquear o script, rode antes `Set-ExecutionPolicy -Scope Process Bypass`.
 - Linux/macOS: `./scripts/demo.sh 3`.
 
-No Windows, para acentos corretos no console, use `chcp 65001` e a opção
-`-Dstdout.encoding=UTF-8` ao executar o `java` (os scripts já fazem isso).
+### Problemas comuns
+
+- `Could not find or load main class .encoding=UTF-8`: faltaram as aspas nas opções `-D`
+  no PowerShell (veja acima). Alternativa: omita as opções `-D` e rode só
+  `java -cp target\mapreduce.jar ...` (os acentos podem sair trocados no console).
+- `Address already in use` no Master: a porta 5000 já está ocupada. Feche o outro processo
+  ou suba o Master em outra porta (`Master 6000`).
+- `Connection refused` no Worker ou Client: o Master não está no ar ou está em outra porta.
+- Client fica esperando sem resposta: nenhum Worker conectado. Suba ao menos um Worker.
 
 ### Parâmetros úteis
 
