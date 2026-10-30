@@ -189,12 +189,21 @@ public class Coordenador {
             } catch (IOException e) {
                 ultimoErro = e;
                 registro.remover(alvo);
-                log("  Worker " + alvo.getWorkerId() + " falhou (" + e.getMessage()
-                        + "). Redistribuindo tarefa " + fase + " #" + indice);
+                log("  >>> FALHA: Worker " + alvo.getWorkerId() + " parou de responder ("
+                        + descreverErro(e) + "). Removido do cluster. Redistribuindo tarefa "
+                        + fase + " #" + indice + ". Workers restantes: " + registro.ativos());
                 tentativas++;
             }
         }
         throw new IOException("Não há Workers disponíveis para a tarefa " + fase + " #" + indice, ultimoErro);
+    }
+
+    /** EOFException vem sem mensagem; traduz para algo legível no log da demonstração. */
+    private static String descreverErro(IOException e) {
+        if (e.getMessage() == null || e instanceof java.io.EOFException) {
+            return "conexão encerrada pelo worker";
+        }
+        return e.getMessage();
     }
 
     private void log(String mensagem) {

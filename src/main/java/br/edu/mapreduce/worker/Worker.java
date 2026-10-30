@@ -3,6 +3,8 @@ package br.edu.mapreduce.worker;
 import br.edu.mapreduce.common.Mensagem;
 import br.edu.mapreduce.common.Protocolo;
 import br.edu.mapreduce.common.RegistroWorker;
+import br.edu.mapreduce.common.TarefaMap;
+import br.edu.mapreduce.common.TarefaReduce;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -24,10 +26,18 @@ public class Worker {
 
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 
+    /**
+     * Demonstração de tolerância a falhas: depois de concluir N tarefas, o Worker
+     * encerra o processo ao receber a próxima, sem responder (simula uma queda).
+     * Ative com -Dmapreduce.cair.apos=N. Zero (padrão) desativa.
+     */
+    private static final int CAIR_APOS = Integer.getInteger("mapreduce.cair.apos", 0);
+
     private final String id;
     private final String host;
     private final int porta;
     private final ExecutorTarefas executor;
+    private int tarefasConcluidas = 0;
 
     public Worker(String id, String host, int porta) {
         this.id = id;
@@ -53,6 +63,10 @@ public class Worker {
             saida.writeObject(new RegistroWorker(id));
             saida.flush();
             log("Registrado no Master como '" + id + "'. Aguardando tarefas...");
+            if (CAIR_APOS > 0) {
+                log("MODO DE FALHA SIMULADA: este Worker vai cair ao receber a "
+                        + (CAIR_APOS + 1) + "a tarefa, sem responder.");
+            }
 
             while (true) {
                 Object recebido = entrada.readObject();
@@ -60,14 +74,31 @@ public class Worker {
                     log("Mensagem desconhecida ignorada: " + recebido.getClass().getName());
                     continue;
                 }
-                Mensagem resposta = executor.executar((Mensagem) recebido);
+                Mensagem tarefa = (Mensagem) recebido;
+                if (CAIR_APOS > 0 && tarefasConcluidas >= CAIR_APOS) {
+                    log("QUEDA SIMULADA: recebi " + descrever(tarefa)
+                            + " e vou encerrar sem responder. O Master deve redistribuir esta tarefa.");
+                    System.exit(1);
+                }
+                Mensagem resposta = executor.executar(tarefa);
                 saida.writeObject(resposta);
                 saida.flush();
                 saida.reset();
+                tarefasConcluidas++;
             }
         } catch (IOException e) {
             log("Conexão com o Master encerrada: " + e.getMessage());
         }
+    }
+
+    private static String descrever(Mensagem tarefa) {
+        if (tarefa instanceof TarefaMap) {
+            return "MAP #" + ((TarefaMap) tarefa).getTarefaId();
+        }
+        if (tarefa instanceof TarefaReduce) {
+            return "REDUCE partição " + ((TarefaReduce) tarefa).getParticaoId();
+        }
+        return tarefa.getClass().getSimpleName();
     }
 
     private void log(String mensagem) {

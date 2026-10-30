@@ -138,6 +138,7 @@ Enquanto o job roda, as janelas dos Workers mostram as tarefas de map e reduce r
 
 - Windows: `.\scripts\demo.ps1 3` abre o Master e 3 Workers em janelas separadas, já com
   a codificação configurada. Depois, basta rodar o Client no seu terminal.
+  Um segundo argumento (`.\scripts\demo.ps1 3 2`) faz o worker-2 simular uma queda no meio do job.
   Se o PowerShell bloquear o script, rode antes `Set-ExecutionPolicy -Scope Process Bypass`.
 - Linux/macOS: `./scripts/demo.sh 3`.
 
@@ -157,13 +158,36 @@ Enquanto o job roda, as janelas dos Workers mostram as tarefas de map e reduce r
   apontando para o IP do Master.
 - `Client [arquivo] [numReducers] [hostMaster] [portaMaster]`.
 - `-Dmapreduce.atraso=0` no Worker remove o atraso artificial usado para a demonstração.
+- `-Dmapreduce.cair.apos=N` no Worker simula uma queda: após concluir N tarefas, o processo
+  encerra ao receber a próxima, sem responder.
 
 ### Demonstrando a tolerância a falhas
 
-1. Suba o Master e 3 Workers.
-2. Rode o Client uma vez e observe as tarefas distribuídas entre os três.
-3. Feche a janela de um dos Workers.
-4. Rode o Client novamente: o Master registra a falha, remove o Worker e redistribui a tarefa.
+O roteiro completo da apresentação, com as saídas reais comentadas linha a linha, está em
+[`docs/ROTEIRO-APRESENTACAO.md`](docs/ROTEIRO-APRESENTACAO.md).
+
+**Queda no meio do job (recomendado).** O Worker aceita `-Dmapreduce.cair.apos=N`: ele executa
+N tarefas normalmente e, ao receber a seguinte, encerra o processo sem responder. O script de
+demonstração já faz isso pelo segundo argumento:
+
+```powershell
+.\scripts\demo.ps1 3 2      # worker-2 cai ao receber sua 2a tarefa
+./scripts/demo.sh 3 2       # Linux/macOS
+```
+
+Rode o Client e observe no log do Master:
+
+```
+>>> FALHA: Worker worker-2 parou de responder (Connection reset). Removido do cluster. Redistribuindo tarefa MAP #4. Workers restantes: [worker-1, worker-3]
+[MAP #4] enviada para worker-3
+```
+
+O resultado final é idêntico ao de um cluster saudável (mesmas 229 palavras distintas e
+465 no total para `data/entrada.txt`); só o tempo do job aumenta.
+
+**Queda entre jobs.** Alternativamente, suba 3 Workers, rode o Client, feche a janela de um
+Worker e rode o Client de novo. O Master só percebe a queda ao tentar enviar a próxima tarefa,
+por isso o job ainda começa listando os três Workers e a linha `>>> FALHA` aparece logo depois.
 
 ## Casos de uso do modelo no mercado
 
